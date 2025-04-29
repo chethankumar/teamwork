@@ -239,20 +239,25 @@ export default function TaskCard({ task }) {
               onChange={(e) => setEditDesc(e.target.value)}
               className="mt-2"
             />
-            <div className="mt-2 space-y-1">
+            <div className="mt-2 flex flex-wrap gap-2">
               {tags.map((tag) => (
-                <div key={tag.id} className="flex items-center gap-1">
-                  <Checkbox
-                    id={`tag-${tag.id}`}
+                <label key={tag.id} className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="checkbox"
                     checked={editTags.includes(tag.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) setEditTags([...editTags, tag.id]);
-                      else setEditTags(editTags.filter((id) => id !== tag.id));
+                    onChange={e => {
+                      if (e.target.checked) setEditTags([...editTags, tag.id]);
+                      else setEditTags(editTags.filter(id => id !== tag.id));
                     }}
-                    className="size-4"
+                    className="accent-blue-500"
                   />
-                  <Label htmlFor={`tag-${tag.id}`}>{tag.name}</Label>
-                </div>
+                  <span
+                    className="px-2 py-0.5 rounded-full text-xs font-medium"
+                    style={{ backgroundColor: tag.color, color: '#fff', opacity: 0.95 }}
+                  >
+                    {tag.name}
+                  </span>
+                </label>
               ))}
             </div>
             <div className="mt-4 flex justify-end gap-2">
