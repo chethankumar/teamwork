@@ -273,7 +273,7 @@ export default function TaskCard({ task }) {
 
       {/* Title & description */}
       <div className="flex-1 p-2">
-        <div className="font-semibold text-base leading-tight mb-1 text-gray-900 truncate">
+        <div className="font-normal text-base leading-tight mb-1 text-gray-900 truncate">
           {task.title}
         </div>
         {task.description && (
