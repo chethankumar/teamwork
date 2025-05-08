@@ -1,0 +1,7 @@
+# robots.txt for TeamWorks
+# Allow all web crawlers to index the site
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://teamworks-app.com/sitemap.xml
