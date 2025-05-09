@@ -10,57 +10,92 @@ import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
-import { Pencil, Plus, Tags, Timer } from "lucide-react";
+import { Pencil, Plus, Tags, Timer, Search, Check } from "lucide-react";
 
-// TagPopover: plus button opens popover to add/remove tags for a task
+// TagPopover: Professional tag management popover for tasks
 function TagPopover({ taskId, tagIds }) {
   const { tags, updateTask } = useKanbanStore();
+  
   // Handler for checkbox change
   const handleToggle = (id, checked) => {
     let newTags;
     if (checked) newTags = [...tagIds, id];
     else newTags = tagIds.filter((tid) => tid !== id);
     updateTask(taskId, { tagIds: newTags });
+    
+    // Force re-render of the card by removing and re-adding any custom gradient styles
+    const styleId = `gradient-style-${taskId}`;
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.remove();
+    }
   };
+  
+  // Get tag count for badge display
+  const tagCount = tagIds.length;
+  
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="ml-1 px-1.5 py-0.5 bg-gray-100 text-xs font-bold border border-gray-300 hover:bg-gray-200 flex items-center rounded-full"
-          aria-label="Add tag"
+          className="ml-1.5 h-6 px-2 py-0.5 bg-white text-xs font-medium border border-gray-300 hover:border-gray-400 hover:bg-gray-50 flex items-center gap-1 rounded-full shadow-sm transition-all duration-200 group"
+          aria-label="Manage tags"
         >
-          <Plus size={16} />
+          <Tags size={12} className="text-gray-500 group-hover:text-gray-700" />
+          {tagCount > 0 && (
+            <span className="bg-blue-100 text-blue-800 text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center">
+              {tagCount}
+            </span>
+          )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-3">
-        <div className="font-semibold mb-2 text-sm">Manage Tags</div>
-        <div className="flex flex-col gap-2">
-          {tags.length === 0 && (
-            <span className="text-xs text-gray-400">No tags defined.</span>
+      <PopoverContent className="w-64 p-0 rounded-xl shadow-xl border-0 overflow-hidden">
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
+          <h4 className="font-medium text-sm text-gray-700 flex items-center gap-1.5">
+            <Tags size={14} className="text-blue-600" /> 
+            Manage Tags
+          </h4>
+        </div>
+        
+        <div className="max-h-64 overflow-y-auto p-3 bg-white">
+          {tags.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-500">
+                No tags available
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {tags.map((tag) => (
+                <label
+                  key={tag.id}
+                  className="flex items-center gap-2 p-1.5 rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={tagIds.includes(tag.id)}
+                      onChange={(e) => handleToggle(tag.id, e.target.checked)}
+                      className="appearance-none h-4 w-4 rounded border border-gray-300 checked:border-blue-500 checked:bg-blue-500 transition-colors cursor-pointer"
+                    />
+                    {tagIds.includes(tag.id) && (
+                      <Check size={10} className="absolute text-white pointer-events-none" />
+                    )}
+                  </div>
+                  <span
+                    className="px-2.5 py-1 rounded-full text-xs font-medium shadow-sm border transition-transform duration-200 hover:scale-105"
+                    style={{
+                      backgroundColor: `${tag.color}E6`,
+                      color: "#fff",
+                      borderColor: tag.color,
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                </label>
+              ))}
+            </div>
           )}
-          {tags.map((tag) => (
-            <label
-              key={tag.id}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={tagIds.includes(tag.id)}
-                onChange={(e) => handleToggle(tag.id, e.target.checked)}
-                className="accent-blue-500"
-              />
-              <span
-                className="px-2 py-0.5 rounded-full text-xs font-medium"
-                style={{
-                  backgroundColor: tag.color,
-                  color: "#fff",
-                  opacity: 0.95,
-                }}
-              >
-                {tag.name}
-              </span>
-            </label>
-          ))}
         </div>
       </PopoverContent>
     </Popover>
@@ -205,54 +240,82 @@ export default function TaskCard({ task }) {
   }
 
   // Generate a gradient for the outer card based on task tags
-  let gradientColors = "bg-gradient-to-r from-blue-50 to-indigo-50";
-  let tagGradientStyle = "";
-  let borderColor = "rgba(96, 165, 250, 0.2)";
-
-  if (taskTags.length > 0) {
-    // If we have tags, use their colors for the gradient
-    if (taskTags.length === 1) {
-      // For a single tag, create a gradient from its color
-      const rgb = hexToRgb(taskTags[0].color);
-      borderColor = `${taskTags[0].color}40`; // 25% opacity version of tag color
-
-      if (rgb) {
-        const lightColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`;
-        const lighterColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`;
-        gradientColors = `custom-gradient-${task.id}`;
-        tagGradientStyle = `linear-gradient(to top, ${lightColor}, ${lighterColor})`;
-      }
-    } else {
-      // For multiple tags, blend their colors
-      const stops = taskTags
-        .map((tag, i) => {
-          const rgb = hexToRgb(tag.color);
-          if (!rgb) return null;
-          const pct = Math.round((i / (taskTags.length - 1)) * 100);
-          return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${
-            i === 0 ? 0.5 : 0.2
-          }) ${pct}%`;
-        })
-        .filter(Boolean);
-
-      if (stops.length > 1) {
-        gradientColors = `custom-gradient-${task.id}`;
-        tagGradientStyle = `linear-gradient(120deg, ${stops.join(", ")})`;
-        borderColor = `${taskTags[0].color}40`; // Use first tag for border
-      }
+  // Using useEffect to ensure this runs both on initial render and when tags change
+  const [cardStyles, setCardStyles] = useState({
+    gradientColors: "bg-gradient-to-r from-blue-50 to-indigo-50",
+    borderColor: "rgba(96, 165, 250, 0.2)"
+  });
+  
+  // Use useEffect to update styles when taskTags change
+  useEffect(() => {
+    // Create a stable reference to the task ID to prevent unnecessary re-renders
+    const taskId = task.id;
+    const tagsString = taskTags.map(tag => tag.id).join(','); // Create a stable dependency
+    
+    let gradientColors = "bg-gradient-to-r from-blue-50 to-indigo-50";
+    let tagGradientStyle = "";
+    let borderColor = "rgba(96, 165, 250, 0.2)";
+    
+    // Clean up any existing style for this task
+    const styleId = `gradient-style-${taskId}`;
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.remove();
     }
 
-    // Add a style tag for the custom gradient if it doesn't exist
-    if (
-      tagGradientStyle &&
-      !document.getElementById(`gradient-style-${task.id}`)
-    ) {
-      const style = document.createElement("style");
-      style.id = `gradient-style-${task.id}`;
-      style.innerHTML = `.custom-gradient-${task.id} { background: ${tagGradientStyle}; }`;
-      document.head.appendChild(style);
+    if (taskTags.length > 0) {
+      // If we have tags, use their colors for the gradient
+      if (taskTags.length === 1) {
+        // For a single tag, create a gradient from its color
+        const rgb = hexToRgb(taskTags[0].color);
+        borderColor = `${taskTags[0].color}40`; // 25% opacity version of tag color
+
+        if (rgb) {
+          const lightColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`;
+          const lighterColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`;
+          gradientColors = `custom-gradient-${taskId}`;
+          tagGradientStyle = `linear-gradient(to top, ${lightColor}, ${lighterColor})`;
+        }
+      } else {
+        // For multiple tags, blend their colors
+        const stops = taskTags
+          .map((tag, i) => {
+            const rgb = hexToRgb(tag.color);
+            if (!rgb) return null;
+            const pct = Math.round((i / (taskTags.length - 1)) * 100);
+            return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${
+              i === 0 ? 0.5 : 0.2
+            }) ${pct}%`;
+          })
+          .filter(Boolean);
+
+        if (stops.length > 1) {
+          gradientColors = `custom-gradient-${taskId}`;
+          tagGradientStyle = `linear-gradient(120deg, ${stops.join(", ")})`;
+          borderColor = `${taskTags[0].color}40`; // Use first tag for border
+        }
+      }
+
+      // Add a style tag for the custom gradient
+      if (tagGradientStyle) {
+        const style = document.createElement("style");
+        style.id = styleId;
+        style.innerHTML = `.custom-gradient-${taskId} { background: ${tagGradientStyle}; }`;
+        document.head.appendChild(style);
+      }
     }
-  }
+    
+    // Update the state with new styles
+    setCardStyles({ gradientColors, borderColor });
+    
+    // Cleanup function to remove styles when component unmounts
+    return () => {
+      const styleToRemove = document.getElementById(styleId);
+      if (styleToRemove) {
+        styleToRemove.remove();
+      }
+    };
+  }, [task.id, taskTags.map(tag => tag.id).join(',')]); // More stable dependency array
 
   // Determine text color for footer based on tag color - darker shade of the background
   let footerTextColor = task.status === "done" ? "text-gray-500" : "text-gray-600";
@@ -283,7 +346,7 @@ export default function TaskCard({ task }) {
     >
       {/* Outer card with gradient */}
       <div
-        className={`rounded-3xl p-1 shadow-md hover:shadow-xl transition-all duration-300 ${gradientColors} ${
+        className={`rounded-3xl p-1 shadow-md hover:shadow-xl transition-all duration-300 ${cardStyles.gradientColors} ${
           task.status === "done" ? "opacity-85" : ""
         } ${
           isOver && canDrop
