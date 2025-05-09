@@ -9,11 +9,11 @@ import Swimlane from "./Swimlane";
  * DraggableSwimlane wraps a Swimlane for drag-and-drop reordering
  * @param {object} props
  * @param {object} props.member - The member object
- * @param {string|null} props.filterTag - Current tag filter
+ * @param {string[]} props.filterTags - Array of tag IDs to filter by
  * @param {number} props.index - Swimlane index
  * @param {string[]} props.memberOrder - Array of member IDs in order
  */
-export default function DraggableSwimlane({ member, filterTag, index, memberOrder }) {
+export default function DraggableSwimlane({ member, filterTags, index, memberOrder }) {
   const ref = useRef(null);
   const moveSwimlane = useKanbanStore((s) => s.moveSwimlane);
   const [{ isOver, canDrop }, drop] = useDrop({
@@ -43,7 +43,7 @@ export default function DraggableSwimlane({ member, filterTag, index, memberOrde
       className={`transition-shadow ${isOver && canDrop ? "ring-2 ring-blue-400 bg-blue-50" : ""} ${isDragging ? "opacity-60" : ""}`}
       style={{ minWidth: 320, maxWidth: 320 }}
     >
-      <Swimlane member={member} filterTag={filterTag} />
+      <Swimlane member={member} filterTags={filterTags} />
     </div>
   );
 }
